@@ -1,18 +1,19 @@
-from sqlmodel import Session, select
-from core.db import engine
+from sqlmodel import Session
 from core.models import Image
+from core.db import engine
 
 
-def get_images():
+def get_images(user_id: int):
+    print(engine.url)
     with Session(engine) as session:
-        results = session.exec(select(Image)).first()
-        print(results)
-        return results
+        results = session.query(Image).filter(Image.user_id == user_id)
+        return results.all()
 
 
-# def post_image(user_id, image: Image):
-#     with Session(engine) as session:
-#         session.add(Image(user_id=user_id, url=image.url, text=image.text))
-#         session.commit()
-#         return session.exec(select(Image).where(Image.user_id == image.user_id)).first()
-        
+def post_image(user_id: int, image: Image):
+    with Session(engine) as session:
+        image = Image(**image.dict(), user_id=user_id)
+        session.add(image)
+        session.commit()
+        session.refresh(image)
+        return image

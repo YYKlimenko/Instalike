@@ -1,9 +1,8 @@
 from sqlmodel import create_engine
-from core.settings import DATABASE_URL
 import core.models
 
-
-engine = create_engine(DATABASE_URL, echo=True)
+database_url = f'sqlite:///core/database.db'
+engine = create_engine(database_url, echo=True)
 
 
 def migrate():
