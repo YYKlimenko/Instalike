@@ -11,6 +11,5 @@ class Image(SQLModel, table=True):
 
 
 class CreateImage(SQLModel):
-    url: str
     text: str | None = None
     date: datetime | None = Field(default_factory=datetime.utcnow)

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile
 from core.models import CreateImage
 import services
 
@@ -12,8 +12,12 @@ def retrieve_images(user_id: int):
 
 
 @app.post('/api/v1/{user_id}/')
-def post_image(user_id: int, image: CreateImage):
-    return services.post_image(user_id, image)
+def post_image(user_id: int, file: UploadFile, image: CreateImage):
+    url = services.get_image_url(user_id, file, image.date)
+    if url:
+        return services.post_image(user_id, url, image)
+    else:
+        return {'error': 'Файл не загружен'}
 
 
 # @app.get('api/v1/{user_id}/{image_id}')
