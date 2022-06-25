@@ -20,7 +20,13 @@ def write_to_database(object_data: SQLModel):
 def get_images(user_id: int):
     with Session(engine) as session:
         images = session.query(Image).filter(Image.user_id == user_id)
-        return images.all()
+    return images.all()
+
+
+def get_image(image_id: int):
+    with Session(engine) as session:
+        image = session.query(Image).get(image_id)
+    return image
 
 
 def post_image(user_id: int, url: str, image: Image):
@@ -28,13 +34,23 @@ def post_image(user_id: int, url: str, image: Image):
     return write_to_database(image)
 
 
+def delete_image(image_id):
+    with Session(engine) as session:
+        image = session.query(Image).filter(Image.id == image_id)
+        image.delete()
+        session.commit()
+
+
+
+
 #Методы работы с файлами
-def is_validate_image_file():
-    return True
+def is_validate_image_file(file: UploadFile):
+    if file.content_type == 'image/jpeg':
+        return True
 
 
 def is_upload_file(url: str, user_id: int, temp_file: UploadFile):
-    if is_validate_image_file():
+    if is_validate_image_file(temp_file):
         if not os.path.exists(f'media/{user_id}'):
             os.mkdir(f'media/{user_id}')
         with open(f'media/{url}', 'wb') as file:
@@ -48,3 +64,9 @@ def get_image_url(user_id: int, file: UploadFile, date: datetime):
     url = f'{user_id}/{date}.jpg'.replace(':', '-')
     if is_upload_file(url, user_id, file):
         return url
+
+
+def delete_file(image_id):
+    image = get_image(image_id)
+    print(image)
+    os.remove(f'media/{image.url}')
