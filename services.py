@@ -8,12 +8,19 @@ from core.db import engine
 
 
 # Методы взаимодействия с базой данных
-def write_to_database(object_data: SQLModel):
+def write_to_database(instance: SQLModel):
     with Session(engine) as session:
-        session.add(object_data)
+        session.add(instance)
         session.commit()
-        session.refresh(object_data)
-    return object_data
+        session.refresh(instance)
+    return instance
+
+
+def delete_from_database(model: object, record_id: int):
+    with Session(engine) as session:
+        instance = session.query(model).filter(model.id == record_id)
+        instance.delete()
+        session.commit()
 
 
 # Методы CRUD операций
@@ -35,12 +42,17 @@ def post_image(user_id: int, url: str, image: Image):
 
 
 def delete_image(image_id):
+    image = get_image(image_id)
+    delete_from_database(Image, image_id)
+    delete_file(image.url)
+
+
+def update_image(image_id, text):
     with Session(engine) as session:
         image = session.query(Image).filter(Image.id == image_id)
-        image.delete()
+        image.update({'text': text})
         session.commit()
-
-
+    return image.first()
 
 
 #Методы работы с файлами
@@ -66,7 +78,5 @@ def get_image_url(user_id: int, file: UploadFile, date: datetime):
         return url
 
 
-def delete_file(image_id):
-    image = get_image(image_id)
-    print(image)
-    os.remove(f'media/{image.url}')
+def delete_file(image_url):
+    os.remove(f'media/{image_url}')

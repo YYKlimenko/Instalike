@@ -29,9 +29,8 @@ def get_image(image_id: int):
 @app.delete('/api/v1/images/{image_id}/', status_code=204, response_class=Response)
 def delete_image(image_id: int):
     services.delete_image(image_id)
-    services.delete_file(image_id)
 
-#
-# @app.update('api/v1/{user_id}/{image_id}')
-# async def update_image(user_id: int, image_id: int):
-#     return services.update_image(user_id, image_id)
+
+@app.put('/api/v1/{image_id}', status_code=201)
+def update_image(image_id: int, text: str):
+    return services.update_image(image_id, text)
