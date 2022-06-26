@@ -8,7 +8,7 @@ app = FastAPI()
 
 @app.get('/api/v1/{user_id}/', status_code=201)
 def retrieve_images(user_id: int):
-    response = services.get_images(user_id)
+    response = services.retrieve_images(user_id)
     return response
 
 
@@ -16,14 +16,14 @@ def retrieve_images(user_id: int):
 def post_image(user_id: int, file: UploadFile, image: CreateImage = Depends()):
     url: str = services.get_image_url(user_id, file, datetime.utcnow())
     if url:
-        return services.post_image(user_id, url, image)
+        return services.create_image(user_id, url, image)
     else:
         return {'error': 'Файл не загружен'}
 
 
 @app.get('/api/v1/images/{image_id}/', status_code=200)
 def get_image(image_id: int):
-    return services.get_image(image_id)
+    return services.retrieve_image(image_id)
 
 
 @app.delete('/api/v1/images/{image_id}/', status_code=204, response_class=Response)

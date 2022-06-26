@@ -2,47 +2,32 @@ import os
 from shutil import copyfileobj
 from datetime import datetime
 from fastapi import UploadFile
-from sqlmodel import SQLModel, Session
-from microblog.models import Image
+from sqlmodel import Session
 from core.db import engine
-
-
-# Методы взаимодействия с базой данных
-def write_to_database(instance: SQLModel):
-    with Session(engine) as session:
-        session.add(instance)
-        session.commit()
-        session.refresh(instance)
-    return instance
-
-
-def delete_from_database(model: object, record_id: int):
-    with Session(engine) as session:
-        instance = session.query(model).filter(model.id == record_id)
-        instance.delete()
-        session.commit()
+from core.services import write_to_database, delete_from_database
+from microblog.models import Image
 
 
 # Методы CRUD операций
-def get_images(user_id: int):
+def retrieve_images(user_id: int):
     with Session(engine) as session:
         images = session.query(Image).filter(Image.user_id == user_id)
     return images.all()
 
 
-def get_image(image_id: int):
+def retrieve_image(image_id: int):
     with Session(engine) as session:
         image = session.query(Image).get(image_id)
     return image
 
 
-def post_image(user_id: int, url: str, image: Image):
+def create_image(user_id: int, url: str, image: Image):
     image = Image(user_id=user_id, url=url, **image.dict())
     return write_to_database(image)
 
 
 def delete_image(image_id):
-    image = get_image(image_id)
+    image = retrieve_image(image_id)
     delete_from_database(Image, image_id)
     delete_file(image.url)
 
