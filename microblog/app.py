@@ -1,6 +1,6 @@
 from datetime import datetime
 from fastapi import FastAPI, Depends, Response, UploadFile
-from core.models import CreateImage
+from microblog.models import CreateImage
 import microblog.services as services
 
 app = FastAPI()

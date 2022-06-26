@@ -3,7 +3,7 @@ from shutil import copyfileobj
 from datetime import datetime
 from fastapi import UploadFile
 from sqlmodel import SQLModel, Session
-from core.models import Image
+from microblog.models import Image
 from core.db import engine
 
 

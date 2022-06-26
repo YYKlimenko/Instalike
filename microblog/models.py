@@ -3,7 +3,7 @@ from sqlmodel import Field, SQLModel
 
 
 class CreateImage(SQLModel):
-    text: str | None
+    text: str | None = Field(max_length=300)
 
 
 class Image(CreateImage, table=True):

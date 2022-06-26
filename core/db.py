@@ -1,12 +1,12 @@
 from sqlmodel import create_engine
-import core.models
+import microblog.models
 
 database_url = f'sqlite:///core/database.db'
 engine = create_engine(database_url, echo=True)
 
 
 def migrate():
-    core.models.SQLModel.metadata.create_all(engine)
+    microblog.models.SQLModel.metadata.create_all(engine)
 
 
 if __name__ == '__main__':
