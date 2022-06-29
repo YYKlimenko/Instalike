@@ -8,7 +8,7 @@ microblog = APIRouter()
 
 
 @microblog.get('/api/v1/{user_id}/', status_code=201)
-def retrieve_images(user_id: int):
+def get_images(user_id: int):
     response = services.retrieve_images(user_id)
     return response
 

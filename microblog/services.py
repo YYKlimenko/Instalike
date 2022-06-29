@@ -2,22 +2,21 @@ import os
 from shutil import copyfileobj
 from datetime import datetime
 from fastapi import UploadFile
-from sqlmodel import Session
-from core.db import engine
-from core.services import write_to_database, delete_from_database
+from core.db import (
+    write_to_database, delete_from_database, retrieve_from_database, retrieve_from_database_by_user,
+    update_in_database
+)
 from microblog.models import Image
 
 
 # Методы CRUD операций
 def retrieve_images(user_id: int):
-    with Session(engine) as session:
-        images = session.query(Image).filter(Image.user_id == user_id)
-    return images.all()
+    images = retrieve_from_database_by_user(Image, user_id)
+    return images
 
 
 def retrieve_image(image_id: int):
-    with Session(engine) as session:
-        image = session.query(Image).get(image_id)
+    image = retrieve_from_database(Image, image_id)
     return image
 
 
@@ -33,11 +32,7 @@ def delete_image(image_id):
 
 
 def update_image(image_id, text):
-    with Session(engine) as session:
-        image = session.query(Image).filter(Image.id == image_id)
-        image.update({'text': text})
-        session.commit()
-    return image.first()
+    return update_in_database(Image, image_id, data={'text': text})
 
 
 #Методы работы с файлами

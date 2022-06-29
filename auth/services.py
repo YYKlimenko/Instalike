@@ -1,8 +1,7 @@
 from datetime import datetime
 from sqlmodel import Session, exists
 from bcrypt import checkpw, gensalt, hashpw
-from core.db import engine
-from core.services import write_to_database
+from core.db import engine, write_to_database
 from auth.models import User
 
 
