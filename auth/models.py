@@ -1,11 +1,13 @@
 from datetime import datetime
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Relationship
 from pydantic import EmailStr, validator
 
 
 class BaseUser(SQLModel):
     username: str = Field(max_length=30, index=True)
     email: EmailStr
+
+    images: list['Image'] | None = Relationship(back_populates="User")
 
 
 class CreatingUser(BaseUser, SQLModel):
@@ -22,13 +24,10 @@ class CreatingUser(BaseUser, SQLModel):
 
 
 class RetrievingUser(BaseUser):
+    id: int = Field(primary_key=True)
     date_registration: datetime = datetime.utcnow()
 
 
 class User(RetrievingUser, table=True):
-    id: int = Field(primary_key=True)
     hashed_password: str = Field(max_length=256)
     is_admin: bool = False
-
-
-
