@@ -7,8 +7,6 @@ class BaseUser(SQLModel):
     username: str = Field(max_length=30, index=True)
     email: EmailStr
 
-    images: list['Image'] | None = Relationship(back_populates="User")
-
 
 class CreatingUser(BaseUser, SQLModel):
     password: str = Field(max_length=256)
@@ -31,3 +29,4 @@ class RetrievingUser(BaseUser):
 class User(RetrievingUser, table=True):
     hashed_password: str = Field(max_length=256)
     is_admin: bool = False
+    images: list["Image"] | None = Relationship(back_populates="user")

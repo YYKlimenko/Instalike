@@ -15,5 +15,5 @@ class Image(CreateImage, table=True):
     url: str
     date: datetime | None = Field(default_factory=datetime.utcnow)
 
-    user_id: int | None = Field(default=None, foreign_key="user.id")
-    user: User = Relationship(back_populates='Images')
+    user_id: int = Field(foreign_key="user.id")
+    user: User = Relationship(back_populates='images')

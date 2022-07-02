@@ -2,44 +2,49 @@ from datetime import datetime, timedelta
 
 from fastapi import Security, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlmodel import Session
 from bcrypt import checkpw, gensalt, hashpw
 import jwt
 from core.db import (write_to_database, retrieve_list_from_database,
-                     retrieve_instance_from_database, check_user_exists, retrieve_instance_by_username)
+                     retrieve_instance_from_database, check_user_exists, retrieve_instance_by_username, engine)
 from core.settings import SECRET_KEY
 from auth.models import User, CreatingUser
 
 
 # Методы CRUD операций
 def create_user(creating_user: CreatingUser):
-    if not check_user_exists(creating_user.username):
-        user = User(username=creating_user.username,
-                    email=creating_user.email,
-                    hashed_password=get_hashed_password(creating_user.password),
-                    is_admin=False,
-                    date_registration=datetime.utcnow())
-        return write_to_database(user)
+    with Session(engine) as session:
+        if not check_user_exists(creating_user.username, session):
+            user = User(username=creating_user.username,
+                        email=creating_user.email,
+                        hashed_password=get_hashed_password(creating_user.password),
+                        is_admin=False,
+                        date_registration=datetime.utcnow())
+            write_to_database(user, session)
+            return user
 
 
 def retrieve_users():
-    users = retrieve_list_from_database(User)
+    with Session(engine) as session:
+        users = retrieve_list_from_database(User, session)
     return users.all()
 
 
 def retrieve_user(user_id: int):
-    user = retrieve_instance_from_database(User, user_id)
+    with Session(engine) as session:
+        user = retrieve_instance_from_database(User, user_id, session)
     return user
 
 
 # Методы авторизации, аутентификации
 def authorize_user(login, password):
-    if user_exists := check_user_exists(login):
-        user = retrieve_instance_by_username(User, login)
-        print(user)
-        if checkpw(password.encode(), user.hashed_password.encode()):
-            return True
-    else:
-        return False
+    with Session(engine) as session:
+        if user_exists := check_user_exists(login, session):
+            user = retrieve_instance_by_username(User, login, session)
+            if checkpw(password.encode(), user.hashed_password.encode()):
+                return True
+        else:
+            return False
 
 
 def get_hashed_password(password):

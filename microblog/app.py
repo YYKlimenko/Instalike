@@ -3,7 +3,6 @@ from microblog.models import CreateImage
 import microblog.services as services
 
 
-
 microblog = APIRouter()
 
 
