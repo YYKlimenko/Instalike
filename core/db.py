@@ -47,8 +47,11 @@ def update_in_database(model: object, instance_id: int, session: Session, data: 
     return instance.first()
 
 
-def check_user_exists(username: str, session: Session) -> bool:
-    user_exists = session.query(exists().where(auth.models.User.username == username)).scalar()
+def check_user_exists(session: Session, username: str | None = None, user_id: int | None = None) -> bool:
+    if user_id:
+        user_exists = session.query(exists().where(auth.models.User.id == user_id)).scalar()
+    if username:
+        user_exists = session.query(exists().where(auth.models.User.username == username)).scalar()
     return user_exists
 
 

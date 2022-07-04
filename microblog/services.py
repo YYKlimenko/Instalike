@@ -2,21 +2,24 @@ import os
 from shutil import copyfileobj
 from datetime import datetime
 
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 from sqlmodel import Session
 
 from core.db import (write_to_database, delete_from_database, retrieve_instance_from_database, update_in_database,
-                     engine)
+                     check_user_exists, engine)
 from microblog.models import Image, CreateImage
 from auth.models import User
+from auth.services import check_permission
 
 
 # Методы CRUD операций
 def retrieve_images(user_id: int):
     with Session(engine) as session:
         user = retrieve_instance_from_database(User, user_id, session)
+        if not user:
+            raise HTTPException(401, detail='User is not exists')
         images = user.images
-    return images
+        return images
 
 
 def retrieve_image(image_id: int):
@@ -25,26 +28,35 @@ def retrieve_image(image_id: int):
     return image
 
 
-def create_image(user_id: int, temp_file: UploadFile, image: CreateImage):
-    url = create_image_url(user_id)
-    if upload_file(temp_file, user_id, url):
-        with Session(engine) as session:
+def create_image(user_id: int, temp_file: UploadFile, image: CreateImage, current_user_id: int):
+    if not check_permission(user_id, current_user_id):
+        raise HTTPException(401, 'There is no permission')
+    with Session(engine) as session:
+        if not check_user_exists(session, user_id=user_id):
+            raise HTTPException(400, detail='User not found')
+        url = create_image_url(user_id)
+        if upload_file(temp_file, user_id, url):
             image = Image(url=url,
                           user=retrieve_instance_from_database(User, user_id, session),
                           **image.dict())
             write_to_database(image, session)
-        return image
+            return image
 
 
-def delete_image(image_id):
+def delete_image(image_id: int, current_user_id: int):
     with Session(engine) as session:
         if image := retrieve_instance_from_database(Image, image_id, session):
+            if not check_permission(image.user_id, current_user_id):
+                raise HTTPException(401, 'There is no permission')
             delete_from_database(Image, image_id, session)
     delete_file(image.url)
 
 
-def update_image(image_id, text):
+def update_image(image_id: int, text: str, current_user_id: int):
     with Session(engine) as session:
+        if image := retrieve_instance_from_database(Image, image_id, session):
+            if not check_permission(image.user_id, current_user_id):
+                raise HTTPException(401, 'There is no permission')
         return update_in_database(Image, image_id, session, data={'text': text})
 
 

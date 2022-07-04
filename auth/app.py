@@ -1,4 +1,5 @@
-from fastapi import Form, HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from auth.models import CreatingUser, RetrievingUser
 import auth.services as services
 
@@ -37,8 +38,10 @@ def get_user(user_id: int):
 
 
 @auth.post('/api/v1/auth/authorization/', status_code=202, tags=['users'], description='Authorize user')
-def post_user(login: str = Form(), password: str = Form()):
-    if services.authorize_user(login, password):
-        return {'message': 'OK'}
-    else:
-        raise HTTPException(401)
+def post_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    return services.authorize_user(form_data.username, form_data.password)
+
+
+@auth.post('/api/v1/auth/token/', status_code=202, tags=['users'], description='Authorize user')
+def post_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    return services.authorize_user(form_data.username, form_data.password)

@@ -14,7 +14,7 @@ from auth.models import User, CreatingUser
 # Методы CRUD операций
 def create_user(creating_user: CreatingUser):
     with Session(engine) as session:
-        if not check_user_exists(creating_user.username, session):
+        if not check_user_exists(session, username=creating_user.username):
             user = User(username=creating_user.username,
                         email=creating_user.email,
                         hashed_password=get_hashed_password(creating_user.password),
@@ -37,21 +37,21 @@ def retrieve_user(user_id: int):
 
 
 # Методы авторизации, аутентификации
-def authorize_user(login, password):
+def authorize_user(login: str, password: str):
     with Session(engine) as session:
-        if user_exists := check_user_exists(login, session):
+        if user_exists := check_user_exists(session, username=login):
             user = retrieve_instance_by_username(User, login, session)
             if checkpw(password.encode(), user.hashed_password.encode()):
-                return True
+                return {"access_token": encode_jwt(user.id), "token_type": "bearer"}
         else:
-            return False
+            raise HTTPException(401, detail='Not authorized')
 
 
-def get_hashed_password(password):
+def get_hashed_password(password: str):
     return hashpw(password.encode(), gensalt())
 
 
-def encode_jwt(user_id):
+def encode_jwt(user_id: int):
     payload = {
         'exp': datetime.utcnow() + timedelta(hours=12),
         'iat': datetime.utcnow(),
@@ -60,7 +60,7 @@ def encode_jwt(user_id):
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
 
-def decode_jwt(token):
+def decode_jwt(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         return payload
@@ -70,5 +70,12 @@ def decode_jwt(token):
         raise HTTPException(status_code=401, detail='Invalid token')
 
 
-def handle_auth(auth: HTTPAuthorizationCredentials = Security(HTTPBearer)):
+def handle_auth(auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
     return decode_jwt(auth.credentials)
+
+
+def check_permission(current_user_id: int, user_id: int):
+    if current_user_id == user_id:
+        return True
+    else:
+        return False
