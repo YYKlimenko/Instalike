@@ -12,39 +12,36 @@ from auth.models import User, CreatingUser
 
 
 # Методы CRUD операций
-def create_user(creating_user: CreatingUser):
-    with Session(engine) as session:
-        if not check_user_exists(session, username=creating_user.username):
-            user = User(username=creating_user.username,
-                        email=creating_user.email,
-                        hashed_password=get_hashed_password(creating_user.password),
-                        is_admin=False,
-                        date_registration=datetime.utcnow())
-            write_to_database(user, session)
-            return user
+
+def create_user(creating_user: CreatingUser, session: Session, is_admin=False):
+    if not check_user_exists(session, username=creating_user.username):
+        user = User(username=creating_user.username,
+                    email=creating_user.email,
+                    hashed_password=get_hashed_password(creating_user.password),
+                    is_admin=is_admin,
+                    date_registration=datetime.utcnow())
+        write_to_database(user, session)
+        return user
 
 
-def retrieve_users():
-    with Session(engine) as session:
-        users = retrieve_list_from_database(User, session)
+def retrieve_users(session: Session):
+    users = retrieve_list_from_database(User, session)
     return users.all()
 
 
-def retrieve_user(user_id: int):
-    with Session(engine) as session:
-        user = retrieve_instance_from_database(User, user_id, session)
+def retrieve_user(user_id: int, session: Session):
+    user = retrieve_instance_from_database(User, user_id, session)
     return user
 
 
 # Методы авторизации, аутентификации
-def authorize_user(login: str, password: str):
-    with Session(engine) as session:
-        if user_exists := check_user_exists(session, username=login):
-            user = retrieve_instance_by_username(User, login, session)
-            if checkpw(password.encode(), user.hashed_password.encode()):
-                return {"access_token": encode_jwt(user.id), "token_type": "bearer"}
-        else:
-            raise HTTPException(401, detail='Not authorized')
+def authorize_user(login: str, password: str, session: Session):
+    if user_exists := check_user_exists(session, username=login):
+        user = retrieve_instance_by_username(User, login, session)
+        if checkpw(password.encode(), user.hashed_password.encode()):
+            return {"access_token": encode_jwt(user.id), "token_type": "bearer"}
+    else:
+        raise HTTPException(401, detail='Not authorized')
 
 
 def get_hashed_password(password: str):
@@ -72,10 +69,3 @@ def decode_jwt(token: str):
 
 def handle_auth(auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
     return decode_jwt(auth.credentials)
-
-
-def check_permission(current_user_id: int, user_id: int):
-    if current_user_id == user_id:
-        return True
-    else:
-        return False

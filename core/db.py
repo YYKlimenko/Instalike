@@ -7,6 +7,11 @@ database_url = f'sqlite:///{DATABASE_FILE}'
 engine = create_engine(database_url, echo=False)
 
 
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
 def create_database(applications: tuple = (microblog.models, auth.models)):
     for application in applications:
         application.SQLModel.metadata.create_all(engine)

@@ -24,9 +24,9 @@ class CreatingUser(BaseUser, SQLModel):
 class RetrievingUser(BaseUser):
     id: int = Field(primary_key=True)
     date_registration: datetime = datetime.utcnow()
+    is_admin: bool = False
 
 
 class User(RetrievingUser, table=True):
     hashed_password: str = Field(max_length=256)
-    is_admin: bool = False
     images: list["Image"] | None = Relationship(back_populates="user")
