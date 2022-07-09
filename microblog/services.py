@@ -5,9 +5,8 @@ from datetime import datetime
 from fastapi import UploadFile, HTTPException
 from sqlmodel import Session
 
-from core.db import (write_to_database, delete_from_database, retrieve_instance_from_database, update_in_database,
-                     check_user_exists)
-from core.permisions import permit_for_owner
+from core.db import write_to_database, delete_from_database, retrieve_instance_from_database, update_in_database
+
 from microblog.models import Image, CreateImage
 from auth.models import User
 
@@ -26,10 +25,7 @@ def retrieve_image(image_id: int, session: Session):
     return image
 
 
-@permit_for_owner
-def create_image(temp_file: UploadFile, image: CreateImage, session: Session, current_user_id: int, user_id: int):
-    if not check_user_exists(session, user_id=user_id):
-        raise HTTPException(400, detail='User not found')
+def create_image(temp_file: UploadFile, image: CreateImage, session: Session, user_id: int):
     url = create_image_url(user_id)
     if upload_file(temp_file, user_id, url):
         image = Image(url=url,
@@ -39,13 +35,13 @@ def create_image(temp_file: UploadFile, image: CreateImage, session: Session, cu
         return image
 
 
-def delete_image(image_id: int, current_user_id: int, session: Session):
+def delete_image(image_id: int, session: Session):
     if image := retrieve_instance_from_database(Image, image_id, session):
         delete_from_database(Image, image_id, session)
     delete_file(image.url)
 
 
-def update_image(image_id: int, text: str, current_user_id: int, session: Session):
+def update_image(image_id: int, text: str, session: Session):
     if image := retrieve_instance_from_database(Image, image_id, session):
         return update_in_database(Image, image_id, session, data={'text': text})
 

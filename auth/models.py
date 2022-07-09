@@ -29,4 +29,4 @@ class RetrievingUser(BaseUser):
 
 class User(RetrievingUser, table=True):
     hashed_password: str = Field(max_length=256)
-    images: list["Image"] | None = Relationship(back_populates="user")
+    images: list['Image'] | None = Relationship(back_populates="user")

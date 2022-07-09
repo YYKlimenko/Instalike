@@ -1,9 +1,10 @@
 from sqlmodel import SQLModel, Session, create_engine, exists
-from core.settings import DATABASE_FILE
+from bcrypt import hashpw, gensalt
+from core.settings import DATABASE_URL
 import microblog.models
 import auth.models
 
-database_url = f'sqlite:///{DATABASE_FILE}'
+database_url = f'{DATABASE_URL}'
 engine = create_engine(database_url, echo=False)
 
 
@@ -62,3 +63,8 @@ def check_user_exists(session: Session, username: str | None = None, user_id: in
 
 if __name__ == '__main__':
     create_database()
+    admin = auth.models.User(username='admin',
+                             email='admin@admin.ru',
+                             is_admin='True',
+                             hashed_password=hashpw('admin'.encode(), gensalt()))
+    write_to_database(admin, Session(engine))
