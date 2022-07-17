@@ -25,13 +25,14 @@ def retrieve_image(image_id: int, session: Session):
     return image
 
 
-def create_image(temp_file: UploadFile, image: CreateImage, session: Session, user_id: int):
+def create_image(temp_file: UploadFile, text: str, session: Session, user_id: int):
     url = create_image_url(user_id)
     if upload_file(temp_file, user_id, url):
         image = Image(url=url,
                       user=retrieve_instance_from_database(User, user_id, session),
-                      **image.dict())
+                      text=text)
         write_to_database(image, session)
+        session.refresh(image)
         return image
 
 

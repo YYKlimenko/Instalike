@@ -13,15 +13,17 @@ def get_session():
         yield session
 
 
-def create_database(applications: tuple = (microblog.models, auth.models)):
+def create_database(engine, applications: tuple = (microblog.models, auth.models)):
     for application in applications:
         application.SQLModel.metadata.create_all(engine)
 
 
-def write_to_database(instance: SQLModel, session: Session):
-    session.add(instance)
+def write_to_database(instances: list[SQLModel] | SQLModel, session: Session):
+    if isinstance(instances, SQLModel):
+        instances = (instances,)
+    for instance in instances:
+        session.add(instance)
     session.commit()
-    session.refresh(instance)
 
 
 def retrieve_list_from_database(model: object, session: Session):
@@ -62,7 +64,7 @@ def check_user_exists(session: Session, username: str | None = None, user_id: in
 
 
 if __name__ == '__main__':
-    create_database()
+    create_database(engine=engine)
     admin = auth.models.User(username='admin',
                              email='admin@admin.ru',
                              is_admin='True',

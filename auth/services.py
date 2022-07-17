@@ -68,4 +68,5 @@ def decode_jwt(token: str):
 
 
 def handle_auth(auth: HTTPAuthorizationCredentials = Security(HTTPBearer())):
+    print(auth)
     return decode_jwt(auth.credentials)
