@@ -1,6 +1,5 @@
+import os
 from bcrypt import hashpw, gensalt
-from fastapi import UploadFile, Form, Depends
-from fastapi.security import HTTPBearer
 from fastapi.testclient import TestClient
 from sqlmodel import create_engine, Session, SQLModel
 from core.db import create_database, get_session, write_to_database
@@ -14,6 +13,9 @@ import auth.models
 
 database_url = f'{TEST_DATABASE_URL}'
 engine = create_engine(database_url, echo=False)
+test_catalogs = ['media/test', 'media/test/1', 'media/test/2']
+test_files = ['test.jpg', '1/1.jpg', '1/2.jpg', '2/3.jpg']
+client = TestClient(app)
 
 
 def get_test_session():
@@ -27,7 +29,6 @@ def test_auth():
 
 app.dependency_overrides[get_session] = get_test_session
 app.dependency_overrides[handle_auth] = test_auth
-client = TestClient(app)
 
 
 def setup():
@@ -37,6 +38,7 @@ def setup():
     
     
 def create_test_data():
+
     user_1 = auth.models.User(username='user_1',
                               email='user1@test.ru',
                               is_admin='False',
@@ -49,6 +51,7 @@ def create_test_data():
                              email='admin@admin.ru',
                              is_admin='True',
                              hashed_password=hashpw('admin'.encode(), gensalt()))
+
     image_1 = microblog.models.Image(text='Test Image 1. Owner — user_1',
                                      url='/test/1/1.jpg',
                                      user=user_1)
@@ -56,12 +59,17 @@ def create_test_data():
                                      url='/test/1/2.jpg',
                                      user=user_1)
     image_3 = microblog.models.Image(text='Test Image 3. Owner — user_2',
-                                     url='/test/1/3.jpg',
+                                     url='/test/2/3.jpg',
                                      user=user_2)
+
     with Session(engine) as session:
         write_to_database([user_1, user_2, admin, image_1, image_2, image_3], session)
-    with open('media/test/1/1.jpg', 'w'):
-        pass
+    for catalog in test_catalogs:
+        if not os.path.exists(catalog):
+            os.mkdir(catalog)
+    for file in test_files:
+        with open(f'media/test/{file}', 'w'):
+            pass
 
 
 def test_get_images():
@@ -108,7 +116,7 @@ def test_post_image():
 
 
 def test_update_image():
-    response = client.put('/api/v1/images/1/', {'image_id': 1, 'text': 'Updated text'})
+    response = client.put('/api/v1/images/1/', params={'text': 'Updated text'})
     print(response.json())
     assert response.status_code == 201
     response = client.get('/api/v1/images/1/')
@@ -160,8 +168,21 @@ def test_get_user():
                              'is_admin': False}
 
 
+def test_post_user():
+    response = client.post('/api/v1/auth/registration/', json={'username': 'user_3',
+                                                               'email': 'user3@test.ru',
+                                                               'password': 'pass',
+                                                               'password2': 'pass'})
+    assert response.status_code == 201
+    response_json = response.json()
+    response_json.pop('date_registration')
+    assert response_json == {'username': 'user_3',
+                             'email': 'user3@test.ru',
+                             'id': 4,
+                             'is_admin': False}
+
+
 def test_authorization():
     response = client.post('/api/v1/auth/authorization/', {'username': 'user_1', 'password': 'password1'})
     assert response.status_code == 202
     assert response.json() == {"access_token": encode_jwt(1), "token_type": "bearer"}
-

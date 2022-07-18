@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response, UploadFile, Form
 from sqlmodel import Session
 from core.db import get_session
 from core.permissions import permit_for_admin_or_owner, IndirectDataOfOwner
-from microblog.models import Image, CreateImage
+from microblog.models import Image
 from auth.services import handle_auth
 import microblog.services as services
 
